@@ -2,29 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-.container{
-   @apply max-w-[700px] mx-auto border border-gray-700 rounded-md p-5;
+.todo_body{
+   @apply max-w-[1100px] mx-auto;
 }
-
-.todo-upper{
-  form{
-    @apply flex justify-between;
-  input{@apply w-[400px] border h-10 p-2;
-    &[type="date"]{@apply w-[150px];}
-    &.error{@apply border-red-600;}
-  }
-
-  button{@apply bg-green-500 text-white px-5 h-10;}
-  } 
+.todo_upper{
+   @apply py-5 px-4 bg-violet-600;
 }
-
-.todo_bottom{
-  @apply mt-5 grid gap-3;
-  .task_item{
-    @apply bg-white drop-shadow-lg p-2 flex gap-2 items-center border border-white;
-    input{@apply w-4 h-4 border ;}
-    span{@apply text-base text-gray-600;}
-    .delete_button{@apply bg-red-600 text-white py-1 px-2 cursor-pointer text-sm;}
-    &.completed{@apply border-green-500;}
-  }
+.task-due{
+   @apply border border-red-600;
 }

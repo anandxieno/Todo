@@ -1,87 +1,162 @@
-"use client"
+"use client";
+import React, { useEffect, useState } from "react";
+import Header from "./components/Header";
+import TaskItem from "./TaskItem";
 
-import Image from "next/image";
-import Tasks from "./Tasks";
-import { useState, useEffect } from "react";
 
 export default function Home() {
-  let [tasks, setTasks] = useState(()=>{
-      const saveTasks = localStorage.getItem('Tasks');
-      return saveTasks ? JSON.parse(saveTasks) : [];
+
+  let [getUsers, setGetUsers] = useState(()=>{
+    let SavedUsers  = localStorage.getItem('user');
+    return SavedUsers ? JSON.parse(SavedUsers) : [];
+  })
+  let [task, setTask] = useState({
+    title: "",
+    taskDate: "",
+    taskUser: "",
+    is_complete: false,
+    is_Due: false,
   });
 
-  const submitForm = (event)=>{
-    event.preventDefault();
-    console.log("form ");
-       let title_field = event.target.taskTitle;
-       let date_field  = event.target.date;
-  
-       if(title_field.value == ""){
-           title_field.classList.add("error");
-       }
-       else if(date_field.value == ""){
-           title_field.classList.remove("error");
-           date_field.classList.add("error");
-       }else{
-        title_field.classList.remove("error");
-        date_field.classList.remove("error");
+  let [tasks, setTasks] = useState(() =>{
+     const savedUser = localStorage.getItem('Task');
+     return savedUser ? JSON.parse(savedUser) : [];
+  });
+  let [updateItem, setUpupdateItem] = useState(-1);
 
-       
+  const getValue = (e) => {
+    let allTasks = { ...task };
+    let InputName = e.target.name;
+    let Inputvalue = e.target.value;
+    allTasks[InputName] = Inputvalue;
 
-        let CheckDuplicate = tasks.some(task => task.taskTitle === title_field.value);
-        
-        if (CheckDuplicate) {
-          alert("A task with the same title already exists.");
-        } else {
+    setTask(allTasks);
+  };
 
-          let currData = {
-            taskTitle : title_field.value,
-            taskDate  : date_field.value
-           };
+  const FormSubmite = (e) => {
+    e.preventDefault();
 
-           setTasks([...tasks, currData]);
-           localStorage.setItem('Tasks', JSON.stringify([...tasks, currData]));
-        }
+    let same = tasks.some((i) => i.title === task.title);
+    if (!same && updateItem === -1) {
+      let FullList = [...tasks, task];
+      setTasks(FullList);
+    }
 
-        event.target.taskTitle.value = "";
-        event.target.date.value = "";
-        
-       }
-  }
+    if (updateItem >= 0) {
+      let FullList = [...tasks];
+      let cuuTask = task;
+      FullList[updateItem] = cuuTask;
+      setTasks(FullList);
+      setUpupdateItem(-1);
+    }
 
-  const deleteRow = (taskIndex) => {
-    let updatedList = tasks.filter((_, index) => index !== taskIndex);
-    setTasks(updatedList);
-    localStorage.setItem('Tasks', JSON.stringify(updatedList));
-  }
+    setTask({
+      title: "",
+      taskDate: "",
+      taskUser: "",
+      is_complete: false,
+      is_Due: false,
+    });
+  };
 
+  const handleEdit = (index) => {
+    setTask(tasks.filter((_, item) => item === index)[0]);
+    setUpupdateItem(index);
+  };
 
-  
+  const handleDelete = (index) => {
+    setTasks(tasks.filter((_, i) => i !== index));
+  };
+
+  const handleComplete = (index) => {
+    let completedItem = tasks.filter((_, i) => i === index);
+    let GetAllItems = [...tasks];
+    completedItem[0].is_complete = !completedItem[0].is_complete;
+    GetAllItems[index] = completedItem[0];
+    setTasks(GetAllItems);
+  };
+
+  const checkDueDates = (tasks) => {
+    let NowDate = new Date();
+    return tasks.map((task) => {
+      let taskDate = new Date(task.taskDate);
+      if (taskDate < NowDate) {
+        task.is_Due = true;
+      } else {
+        task.is_Due = false;
+      }
+      return task;
+    });
+  };
+
+  useEffect(() => {
+    // const savedTasks = localStorage.getItem("tasks");
+    // if (savedTasks) {
+    //   setTasks(checkDueDates(JSON.parse(savedTasks)));
+    // }
+
+    const interval = setInterval(() => {
+      setTasks((prevTasks) => checkDueDates(prevTasks));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() =>{
+     localStorage.setItem('Task', JSON.stringify(tasks))
+  }, [tasks]);
 
   return (
     <>
-     <h1>This is h1</h1>
-      <div className="container">
-        <div className="todo-upper">
-            <form onSubmit={ submitForm }>
-                <input type="text" name="taskTitle" />            
-                <input type="date" name="date" pattern="\d{4}-\d{2}-\d{2}" /> 
-                <button>Add</button>
-            </form>
-        </div>
-        <div className="todo_bottom">
-          {
-            (tasks.length >= 1) ? 
-            tasks.map((value, index)=>(
-              <Tasks key={index} taskIndex={index} taskValue = {value} deleteItem ={deleteRow}  />
-            )) : "No data found"
-          }
-           
-        </div>
+      <Header />
+      <div className="todo_upper">
+        <form className="flex gap-2 items-center justify-between" onSubmit={FormSubmite}>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              name="title"
+              onChange={getValue}
+              value={task.title}
+              className="w-[400px] h-10 focus:outline-none p-2"
+            />
+            <input
+              type="date"
+              name="taskDate"
+              id=""
+              onChange={getValue}
+              className="w-[140px] h-10 focus:outline-none p-2"
+              value={task.taskDate}
+            />
+            <select
+              name="taskUser"
+              id=""
+              className=" h-10 focus:outline-none p-2"
+              value={task.taskUser}
+              onChange={getValue}
+            >
+              <option value="">select user</option>
+              {
+                getUsers.map((getUser, index) =>(
+                  <option key={index} value={getUser.toLowerCase()}>{getUser}</option> 
+                ))
+              }
+            </select>
+          </div>
+
+          <button type="submit" className="bg-white px-3 py-2">Save</button>
+        </form>
+      </div>
+      <div className="todolist mt-10 bg-violet-400 max-w-[800px] p-3 grid gap-3">
+        {
+          tasks.length > 0 ?
+            tasks.map((item, index) => (
+              <TaskItem key={index} taskItem={item} itemIndex={index} editItem={handleEdit} deleteItem={handleDelete} completeTask={handleComplete} />
+            ))
+
+            : "No data found"
+        }
 
       </div>
     </>
-    
-
   );
 }
